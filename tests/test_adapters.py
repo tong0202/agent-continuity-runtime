@@ -9,6 +9,7 @@ import tempfile
 import threading
 import unittest
 from unittest.mock import patch
+import urllib.error
 
 from agent_continuity.adapters import (
     AdapterConflictError,
@@ -100,10 +101,12 @@ class AdapterTests(unittest.TestCase):
 
             def do_POST(self) -> None:
                 type(self).request_count += 1
+                body = b'{"error":"unavailable"}'
                 self.send_response(503)
                 self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
-                self.wfile.write(b'{"error":"unavailable"}')
+                self.wfile.write(body)
 
             def log_message(self, format: str, *args: object) -> None:
                 return
@@ -125,6 +128,46 @@ class AdapterTests(unittest.TestCase):
                 server.shutdown()
                 server.server_close()
                 thread.join(timeout=5)
+
+    def test_http_error_with_reset_body_is_recorded_once(self) -> None:
+        class BrokenBody:
+            def read(self, amount: int = -1) -> bytes:
+                raise ConnectionResetError("injected reset")
+
+            def close(self) -> None:
+                return
+
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            step_context = context(home, "f" * 64)
+            error = urllib.error.HTTPError(
+                "http://127.0.0.1/events",
+                503,
+                "Service Unavailable",
+                {"Content-Type": "application/json"},
+                BrokenBody(),
+            )
+            adapter = HttpJsonAdapter()
+            with patch(
+                "agent_continuity.adapters.urllib.request.urlopen",
+                side_effect=error,
+            ) as request:
+                with self.assertRaisesRegex(RuntimeError, "status 503"):
+                    adapter.request(step_context, error.url, {"value": 10})
+                with self.assertRaisesRegex(RuntimeError, "status 503"):
+                    adapter.request(step_context, error.url, {"value": 10})
+                self.assertEqual(request.call_count, 1)
+
+            receipt_path = (
+                home
+                / "adapter_receipts"
+                / "http"
+                / f"{step_context.idempotency_key}.json"
+            )
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            self.assertEqual(receipt["status"], "HTTP_ERROR")
+            self.assertEqual(receipt["status_code"], 503)
+            self.assertIn("ConnectionResetError", receipt["response_read_error"])
 
     def test_command_adapter_runs_once(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

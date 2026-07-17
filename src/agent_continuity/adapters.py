@@ -209,16 +209,27 @@ class HttpJsonAdapter:
             headers=request_headers,
             method=normalized_method,
         )
+        response_read_error: str | None = None
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
-                response_bytes = response.read(MAX_HTTP_RESPONSE_BYTES + 1)
                 status_code = int(response.status)
                 response_headers = dict(response.headers.items())
+                try:
+                    response_bytes = response.read(MAX_HTTP_RESPONSE_BYTES + 1)
+                except OSError as exc:
+                    response_bytes = b""
+                    response_read_error = f"{type(exc).__name__}: {exc}"
         except urllib.error.HTTPError as exc:
             try:
-                response_bytes = exc.read(MAX_HTTP_RESPONSE_BYTES + 1)
                 status_code = int(exc.code)
                 response_headers = dict(exc.headers.items()) if exc.headers else {}
+                try:
+                    response_bytes = exc.read(MAX_HTTP_RESPONSE_BYTES + 1)
+                except OSError as read_error:
+                    response_bytes = b""
+                    response_read_error = (
+                        f"{type(read_error).__name__}: {read_error}"
+                    )
             finally:
                 exc.close()
         if len(response_bytes) > MAX_HTTP_RESPONSE_BYTES:
@@ -238,6 +249,8 @@ class HttpJsonAdapter:
             "response_content_type": response_headers.get("Content-Type"),
             "completed_at": utc_now(),
         }
+        if response_read_error is not None:
+            receipt["response_read_error"] = response_read_error
         if not _write_json_once(receipt_path, receipt):
             return {
                 **_existing_receipt(receipt_path, operation_hash),

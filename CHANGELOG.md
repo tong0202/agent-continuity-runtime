@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+### Fixed
+
+- Persist an HTTP status receipt when reading the response body ends with a connection reset, preventing an automatic duplicate request.
+
 ## [0.4.0] - 2026-07-17
 
 ### Added
