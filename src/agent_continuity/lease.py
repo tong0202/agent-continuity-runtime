@@ -93,8 +93,8 @@ class RuntimeLease:
                         )
                     try:
                         self.path.unlink()
-        except FileNotFoundError:
-            pass
+                    except FileNotFoundError:
+                        pass
                     continue
                 with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
                     json.dump(payload, handle, sort_keys=True)
