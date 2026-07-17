@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+build/
+dist/
+.runtime/
+demo_state/
+adapter_demo_state/
+outputs/
+*.db
+*.sqlite
+*.sqlite3
+audit.key
+.coverage
+htmlcov/

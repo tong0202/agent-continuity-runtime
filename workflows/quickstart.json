@@ -1,0 +1,23 @@
+{
+  "schema": "agent-continuity.workflow.v1",
+  "workflow_id": "quickstart-v0.4.0",
+  "steps": [
+    {
+      "id": "show-runtime",
+      "type": "command",
+      "argv": [
+        "$python",
+        "-c",
+        "print('agent-continuity command completed')"
+      ],
+      "cwd": "..",
+      "timeout": 60
+    },
+    {
+      "id": "write-marker",
+      "type": "file",
+      "target": "../outputs/quickstart-ready.txt",
+      "text": "agent-continuity quickstart completed\n"
+    }
+  ]
+}

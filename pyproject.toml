@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-continuity-runtime"
+version = "0.4.0"
+description = "Crash-resumable agent workflows with stable idempotency keys and tamper-evident audit trails"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = []
+keywords = [
+  "agent",
+  "workflow",
+  "crash-recovery",
+  "idempotency",
+  "audit-log",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: System :: Recovery Tools",
+]
+
+[project.urls]
+Homepage = "https://github.com/tong0202/agent-continuity-runtime"
+Documentation = "https://github.com/tong0202/agent-continuity-runtime#readme"
+Issues = "https://github.com/tong0202/agent-continuity-runtime/issues"
+Changelog = "https://github.com/tong0202/agent-continuity-runtime/blob/main/CHANGELOG.md"
+
+[project.scripts]
+agent-continuity = "agent_continuity.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
